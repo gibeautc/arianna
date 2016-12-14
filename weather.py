@@ -60,4 +60,4 @@ while True:
 	c_index+=1
 	if c_index==len(city):
 		c_index=0
-	time.sleep(200)
+	time.sleep(600)

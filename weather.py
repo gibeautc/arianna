@@ -11,18 +11,18 @@ curs=db.cursor()
 
 citys=['albany','salem','portland','newport','eugene']
 
-rate=0
+rate=11
 
 
 def Get_current(city_name):
 	print("Getting Current: "+city_name)
 	url="http://api.wunderground.com/api/803ee257021d3c0e/conditions/q/OR/"+city_name+".json"
 	try:
-		rate+=1
 		response=urllib.urlopen(url)
 		data=json.loads(response.read())
 	except:
 		print("Error Getting Data")
+		print(sys.exc_info())
 		return
 	cur=data['current_observation']
 	town=cur['display_location']['full']
@@ -51,6 +51,7 @@ def Get_alert(city_name):
 		alerts=data['alerts']
 	except:
 		print("Error Getting Data")
+		print(sys.exc_info())
 		return
 	for alert in alerts:
 		issued=alert['date']
@@ -78,11 +79,11 @@ def Get_forecast(city_name):
 	url="http://api.wunderground.com/api/803ee257021d3c0e/forecast10day/q/OR/"+city_name+".json"
 	print("Getting Forecast: "+city_name)
 	try:
-		rate+=1
 		response=urllib.urlopen(url)
 		data=json.loads(response.read())
 	except:
 		print("Error Getting Data")
+		print(sys.exc_info())
 		return
 	forcast=data['forecast']['simpleforecast']['forecastday']
 	for day in forcast:
@@ -123,11 +124,11 @@ while True:
 		for city in citys:
 			Get_forecast(city)
 			Get_alert(city)
-			delay(10)
-	time.sleep(60)
+			time.sleep(10)
 	for city in citys:
 		Get_current(city)
-		time.sleep(10)
+		time.sleep(30)
+	time.sleep(60)
 	rate+=1
 		
 	

@@ -4,6 +4,12 @@ import sys
 import datetime
 import time
 def alert_scrub():
+	
+	#curs.execute("alter ignore table weather_alert add unique(body,expires)")
+	#need to scrub for duplicates, hopefully keeping the newest one
+
+
+	#Scrub for expired alerts	
 	months=['Error','January','Feburary','March','April','May','June','July','August','September','October','November','December']
 	#scrub the alert table and change 'active' status if needed
 	curs.execute("select * from weather_alert where active=1")
@@ -11,6 +17,7 @@ def alert_scrub():
 	now=datetime.date.today()
 	#print("Now")
 	#print(now)
+	rem=0
 	for alert in a:
 		#print(alert[3])
 		r=str(alert[3])
@@ -30,8 +37,9 @@ def alert_scrub():
 		if int(yr)<=now.year:
 			if m<=now.month:
 				if int(day[0])<now.day:
-					print("EXPIRED")
+					rem+=1
 					i=alert[8]
+					print("ID: "+str(i))
 					command='update weather_alert set active=0 where id='+str(i)+' limit 1'
 					try:
 						curs.execute(command)
@@ -40,12 +48,19 @@ def alert_scrub():
 						print("Error Changing Entry: Rolling Back")
 						db.rollback()
 						print(sys.exc_info())
-
+	print(str(rem)+" Expired")
 db=MySQLdb.connect("localhost","auto","myvice12","main")
 curs=db.cursor()
+
+alert_scrub()
+
+#fore=[]
 curs.execute("select * from weather_forecast where fore_date=current_date()")
 s=curs.fetchall()
-
+#fore.append(s)
+#curs.exectute("select * from weather_forecast where fore_date=current_date()+1")
+#s=curs.fetchall()
+#fore.append(s)
 curs.execute("select * from weather_cur where rec_date=current_date() and city='albany' order by rec_time desc limit 1")
 albany_cur=curs.fetchone() 
 
@@ -90,7 +105,6 @@ citys_cur.append(portland_cur)
 citys_cur.append(eugene_cur)	
 citys_name=["Albany","Salem","Portland","Eugene"]
 for x in range(0,4):
-	
 	#city_cur=citys_cur[x]
 	high=0
 	low=0
@@ -109,21 +123,23 @@ for x in range(0,4):
 		wind+=float(line[5])*.01*count
 		scale+=.01*count
 		count+=1
+	#compress 'rain' string to only four char
+	rs=str(qpf/scale)
+	rs=rs[:4]
 	print(citys_name[x])
 	print("\tForecast\tCurrent")
 	print("Temp:\t"+str(int(high/scale))+"/"+str(int(low/scale))+"\t\t"+str(citys_cur[x][4]))
 	print("Wind:\t"+str(int(wind/scale))+"\t\t"+str(citys_cur[x][5]))
-	print("Rain:\t"+str(qpf/scale)+"\t\t"+str(citys_cur[x][8]))
+	print("Rain:\t"+rs+"\t\t"+str(citys_cur[x][8]))
 	print("Snow:\t"+str(snow/scale))
-	print("\n")
 	for al in a:
 		#print(al[7])
 		if citys_name[x].lower()==al[7]:
+			print(al[4]+" Expires: "+al[3])
 			#print(al[5])
-			print(al[4])
+	
+	print("\n")		
 
-
-alert_scrub()
 
 print("Closing Database and exiting")
 db.close()

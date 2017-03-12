@@ -32,8 +32,8 @@ def alert_scrub():
 				m=x
 				#print("Found it")
 				break
-			#print("Didnt Find Month...")
-		#print(yr+'-'+str(m)+'-'+day[0])
+			print("Didnt Find Month...")
+		print(yr+'-'+str(m)+'-'+day[0])
 		if int(yr)<=now.year:
 			if m<=now.month:
 				if int(day[0])<now.day:

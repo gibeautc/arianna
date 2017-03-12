@@ -7,13 +7,12 @@ import time
 
 up=u"\u25B2"
 down=u"\u25BC"
-#21d1
 class bcolors:
 	BLUE='\033[0;37;44m'
 	ENDC='\033[0m'
 
 def alert_scrub():
-	months=['Error','January','Feburary','March','April','May','June','July','August','September','October','November','December']
+	months=['Error','January','February','March','April','May','June','July','August','September','October','November','December']
 	curs.execute("select * from weather_alert where active=1")
 	a=curs.fetchall()
 	now=datetime.date.today()
@@ -45,13 +44,6 @@ def alert_scrub():
 	print(str(rem)+" Expired")
 
 class ten_day(object):
-	#high=[]
-	#low=[]
-	#wind=[]
-	#rain=[]
-	#snow=[]
-	#weather=[]
-	#city=""
 	def __init__(self,c):
 		self.city=c
 		self.high=[]
@@ -60,6 +52,7 @@ class ten_day(object):
 		self.rain=[]
 		self.snow=[]
 		self.weather=[]
+		self.alerts=[]
 	def add_day(self,h,l,w,r,s,we):
 		self.high.append(h)
 		self.low.append(l)
@@ -106,29 +99,33 @@ class ten_day(object):
 				highH=bcolors.BLUE+str(self.high[x])+bcolors.ENDC
 			else:
 				highH=str(self.high[x])
-			
 			temp.append(highH+th+"/"+lowH+tl)	
 		print("Temp"+"\t"+temp[0]+tabs[0]+temp[1]+tabs[1]+temp[2]+tabs[2]+temp[3]+tabs[3]+temp[4])	
 		print("Wind"+"\t"+tmpw[0]+tabs[0]+tmpw[1]+tabs[1]+tmpw[2]+tabs[2]+tmpw[3]+tabs[3]+tmpw[4])
 		print("Rain"+"\t"+tmpr[0]+tabs[0]+tmpr[1]+tabs[1]+tmpr[2]+tabs[2]+tmpr[3]+tabs[3]+tmpr[4])
 		print("Snow"+"\t"+tmps[0]+tabs[0]+tmps[1]+tabs[1]+tmps[2]+tabs[2]+tmps[3]+tabs[3]+tmps[4])
+		for alert in self.alerts:
+			print("ALERT: "+alert[4]+" Expires:"+alert[3]+" ID: "+str(alert[8]))
 		print("\n\n")
 
 	def trend(self,lst):
 		trd=[]
-		#print(lst)
+		sm=0
 		for n in range(len(lst)-1):
 			x=float(lst[n])
 			y=float(lst[n+1])
 			trd.append(y-x)
+			sm+=float(lst[n])
 		s=0
 		for n in trd:
 			s+=n
-		#print(trd)
-		#print("\n")	
-		if s==0:
+		a=s/len(trd)
+		#print("list sum: "+str(sm)+"\tAve: "+str(sm/len(lst)))
+		#print("Trend Sum: "+str(s)+"\tAve: "+str(a))
+		#print("")
+		if abs(a)<.25:
 			return ""
-		if s<0:
+		if a<-.25:
 			return down
 		else:
 			return up
@@ -169,11 +166,13 @@ def process_forcast(name):
 		rain=rain/count
 		snow=snow/count
 		wind=wind/count
-		#if low<=32:
-		#	low=bcolors.BLUE+str(low)+bcolors.ENDC
-		#if high<=32:	
-		#	high=bcolors.BLUE+str(high)+bcolors.ENDC
 		tenday.add_day(high,low,str(wind),str(rain),str(snow),w)
+	curs.execute("select * from weather_alert where city='"+name+"' and active=1")
+	a=curs.fetchall()
+	for alert in a:
+		if 'Craft' in alert[4]:
+			continue
+		tenday.alerts.append(alert)
 	return tenday
 
 
@@ -192,8 +191,6 @@ salem.Print()
 
 portland=process_forcast('portland')
 portland.Print()
-
-
 
 
 print("Closing Database and exiting")
